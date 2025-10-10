@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Event - Digital Gift Table</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen">
+            <div class="loading-container">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading gift event...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Screen -->
+        <div id="error-screen" class="screen" style="display: none;">
+            <div class="error-container">
+                <div class="error-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Event Not Found</h2>
+                    <p id="error-message">The gift event you're looking for doesn't exist or has expired.</p>
+                    <button onclick="window.location.reload()" class="btn btn-primary">
+                        <i class="fas fa-refresh"></i> <span>Try Again</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Attendee Interface -->
+        <div id="attendee-screen" class="screen" style="display: none;">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <h1><i class="fas fa-gift"></i> <span>Digital Gift Table</span></h1>
+                    <div class="header-actions">
+                        <div class="language-switcher">
+                            <select id="attendee-language-select" class="language-select">
+                                <option value="en">🇺🇸 English</option>
+                                <option value="de">🇩🇪 Deutsch</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Event Info -->
+            <div class="event-banner">
+                <div class="event-info">
+                    <h2 id="event-title"></h2>
+                    <p id="event-description"></p>
+                    <div class="event-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-user"></i>
+                            <strong>Gift Recipient:</strong> <span id="gift-receiver"></span>
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-gift"></i>
+                            <strong>Gift Sender:</strong> <span id="gift-sender"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Selected Items Summary -->
+                <div id="selected-summary" class="selected-summary" style="display: none;">
+                    <h3><i class="fas fa-check-circle"></i> <span>Your Selected Gifts</span></h3>
+                    <div id="selected-items-list" class="selected-items-list">
+                        <!-- Selected items will be shown here -->
+                    </div>
+                </div>
+
+                <!-- Gift Items -->
+                <div class="gifts-section">
+                    <div class="section-header">
+                        <h3>Available Gift Items</h3>
+                        <p>Select the gifts you'd like to contribute to this event</p>
+                    </div>
+                    
+                    <div id="gifts-list" class="gifts-grid">
+                        <!-- Gift items will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <i class="fas fa-gift"></i>
+                    <h3>No Gift Items Yet</h3>
+                    <p>The event organizer hasn't added any gift items yet. Check back later!</p>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>Digital Gift Table - Select gifts to contribute to this event</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Selection</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmation-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button id="confirm-selection" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <script src="/attendee.js"></script>
+</body>
+</html>

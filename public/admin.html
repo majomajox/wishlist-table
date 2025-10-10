@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Gift Table - Admin</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="login-header">
+                        <h1><i class="fas fa-gift"></i> Digital Gift Table</h1>
+                        <div class="language-switcher">
+                            <select id="login-language-select" class="language-select">
+                                <option value="en">🇺🇸 English</option>
+                                <option value="de">🇩🇪 Deutsch</option>
+                            </select>
+                        </div>
+                    </div>
+                    <h2>Admin Login</h2>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="username">Username or Email</label>
+                            <input type="text" id="username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                    <div id="login-error" class="error-message" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Admin Interface -->
+        <div id="admin-screen" class="screen" style="display: none;">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <h1><i class="fas fa-gift"></i> <span>Digital Gift Table Admin</span></h1>
+                    <div class="header-actions">
+                        <div class="language-switcher">
+                            <select id="language-select" class="language-select">
+                                <option value="en">🇺🇸 English</option>
+                                <option value="de">🇩🇪 Deutsch</option>
+                            </select>
+                        </div>
+                        <button id="new-event-btn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> <span>New Event</span>
+                        </button>
+                        <button id="logout-btn" class="btn btn-secondary">
+                            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Events List -->
+                <div id="events-section" class="section">
+                    <h2>Gift Events</h2>
+                    <div id="events-list" class="events-grid">
+                        <!-- Events will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Event Details -->
+                <div id="event-details-section" class="section" style="display: none;">
+                    <div class="event-header">
+                        <button id="back-to-events" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> <span>Back to Events</span>
+                        </button>
+                        <div class="event-actions">
+                            <button id="publish-event-btn" class="btn btn-success" style="display: none;">
+                                <i class="fas fa-paper-plane"></i> <span>Publish Event</span>
+                            </button>
+                            <button id="close-event-btn" class="btn btn-warning" style="display: none;">
+                                <i class="fas fa-lock"></i> <span>Close Event</span>
+                            </button>
+                            <button id="edit-event-btn" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> <span>Edit Event</span>
+                            </button>
+                            <button id="delete-event-btn" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> <span>Delete Event</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="event-content">
+                        <div class="event-info">
+                            <h2 id="event-title"></h2>
+                            <p id="event-description"></p>
+                            <div class="event-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-user"></i>
+                                    <strong>Gift Recipient:</strong> <span id="gift-receiver"></span>
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-users"></i>
+                                    <strong>Attendees:</strong> <span id="attendee-count"></span>
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-gift"></i>
+                                    <strong>Gift Items:</strong> <span id="gift-count"></span>
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-circle status-indicator" id="status-indicator"></i>
+                                    <strong>Status:</strong> <span id="event-status"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Tabs -->
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="attendees">
+                                <i class="fas fa-users"></i> <span>Attendees</span>
+                            </button>
+                            <button class="tab-btn" data-tab="gifts">
+                                <i class="fas fa-gift"></i> <span>Gift Items</span>
+                            </button>
+                        </div>
+
+                        <!-- Attendees Tab -->
+                        <div id="attendees-tab" class="tab-content active">
+                            <div class="tab-header">
+                                <h3>Event Attendees</h3>
+                                <button id="add-attendees-btn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> <span>Add Attendees</span>
+                                </button>
+                            </div>
+                            <div id="attendees-list" class="attendees-list">
+                                <!-- Attendees will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Gift Items Tab -->
+                        <div id="gifts-tab" class="tab-content">
+                            <div class="tab-header">
+                                <h3>Gift Items</h3>
+                                <button id="add-gift-btn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> <span>Add Gift Item</span>
+                                </button>
+                            </div>
+                            <div id="gifts-list" class="gifts-grid">
+                                <!-- Gift items will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Event Modal -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="event-modal-title">Create New Event</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="event-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="event-subject">Event Subject *</label>
+                        <input type="text" id="event-subject" name="subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-description">Description</label>
+                        <textarea id="event-description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="gift-receiver-name">Gift Receiver Name *</label>
+                        <input type="text" id="gift-receiver-name" name="gift_receiver_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="attendees-input">Attendees (one per line)</label>
+                        <textarea id="attendees-input" name="attendees" rows="5"></textarea>
+                        <small>Format: Name, Email (one per line)</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Gift Item Modal -->
+    <div id="gift-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="gift-modal-title">Add Gift Item</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="gift-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="gift-name">Gift Name *</label>
+                        <input type="text" id="gift-name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gift-price">Price</label>
+                        <input type="number" id="gift-price" name="price" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="gift-store-urls">Store URLs (one per line)</label>
+                        <textarea id="gift-store-urls" name="store_urls" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Gift Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
