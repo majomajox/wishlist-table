@@ -160,6 +160,11 @@ class AttendeeApp {
     renderGiftItems(giftItems) {
         const container = document.getElementById('gifts-list');
         
+        // Get translations
+        const selectedByYouText = this.currentLanguage === 'de' ? 'Von dir ausgewählt' : 'Selected by you';
+        const selectedByText = this.currentLanguage === 'de' ? 'Ausgewählt von' : 'Selected by';
+        const availableText = this.currentLanguage === 'de' ? 'Verfügbar' : 'Available';
+        
         container.innerHTML = giftItems.map(gift => {
             const isSelected = gift.selected_by_attendee_id === this.eventData.attendee.id;
             const isSelectedByOther = gift.selected_by_attendee_id && !isSelected;
@@ -168,13 +173,13 @@ class AttendeeApp {
             return `
                 <div class="gift-card ${isSelected ? 'selected' : ''} ${isSelectedByOther ? 'selected-by-other' : ''}">
                     <div class="gift-status ${isSelected ? 'selected' : isSelectedByOther ? 'selected-by-other' : 'available'}">
-                        ${isSelected ? 'Selected by you' : isSelectedByOther ? `Selected by ${gift.selected_by_name}` : 'Available'}
+                        ${isSelected ? selectedByYouText : isSelectedByOther ? `${selectedByText} ${gift.selected_by_name}` : availableText}
                     </div>
                     <h4>${gift.name}</h4>
                     ${gift.price ? `<div class="gift-price">€${gift.price}</div>` : ''}
                     ${gift.store_urls && Array.isArray(gift.store_urls) && gift.store_urls.length > 0 ? `
                         <div class="gift-stores">
-                            <h5>Available at:</h5>
+                            <h5>${this.currentLanguage === 'de' ? 'Verfügbar bei:' : 'Available at:'}</h5>
                             <ul>
                                 ${gift.store_urls.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('')}
                             </ul>
@@ -184,18 +189,18 @@ class AttendeeApp {
                         ${!isEventClosed ? (
                             isSelected ? 
                                 `<button class="btn btn-sm btn-warning gift-action-btn" data-action="unselect" data-gift-id="${gift.id}">
-                                    <i class="fas fa-times"></i> <span class="btn-text">Unselect</span>
+                                    <i class="fas fa-times"></i> <span class="btn-text">${this.currentLanguage === 'de' ? 'Abwählen' : 'Unselect'}</span>
                                 </button>` :
                                 !isSelectedByOther ?
                                     `<button class="btn btn-sm btn-primary gift-action-btn" data-action="select" data-gift-id="${gift.id}">
-                                        <i class="fas fa-check"></i> <span class="btn-text">Select</span>
+                                        <i class="fas fa-check"></i> <span class="btn-text">${this.currentLanguage === 'de' ? 'Auswählen' : 'Select'}</span>
                                     </button>` :
                                     `<button class="btn btn-sm btn-secondary" disabled>
-                                        <i class="fas fa-lock"></i> <span class="btn-text">Selected by ${gift.selected_by_name}</span>
+                                        <i class="fas fa-lock"></i> <span class="btn-text">${selectedByText} ${gift.selected_by_name}</span>
                                     </button>`
                         ) : (
                             `<button class="btn btn-sm btn-secondary" disabled>
-                                <i class="fas fa-lock"></i> <span class="btn-text">Event Closed</span>
+                                <i class="fas fa-lock"></i> <span class="btn-text">${this.currentLanguage === 'de' ? 'Event geschlossen' : 'Event Closed'}</span>
                             </button>`
                         )}
                     </div>

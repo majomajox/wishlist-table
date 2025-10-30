@@ -50,26 +50,26 @@
                 </div>
             </header>
 
-            <!-- Event Info -->
-            <div class="event-banner">
-                <div class="event-info">
-                    <h2 id="event-title"></h2>
-                    <p id="event-description"></p>
-                    <div class="event-meta">
-                        <span class="meta-item">
-                            <i class="fas fa-user"></i>
-                            <strong>Gift Recipient:</strong> <span id="gift-receiver"></span>
-                        </span>
-                        <span class="meta-item">
-                            <i class="fas fa-gift"></i>
-                            <strong>Gift Sender:</strong> <span id="gift-sender"></span>
-                        </span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Main Content -->
             <main class="main-content">
+                <!-- Event Info Section -->
+                <div class="section">
+                    <div class="event-info">
+                        <h2 id="event-title"></h2>
+                        <p id="event-description"></p>
+                        <div class="event-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-user"></i>
+                                <strong>Gift Recipient:</strong> <span id="gift-receiver"></span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-gift"></i>
+                                <strong>Gift Sender:</strong> <span id="gift-sender"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Selected Items Summary -->
                 <div id="selected-summary" class="selected-summary" style="display: none;">
                     <h3><i class="fas fa-check-circle"></i> <span>Your Selected Gifts</span></h3>
@@ -78,8 +78,8 @@
                     </div>
                 </div>
 
-                <!-- Gift Items -->
-                <div class="gifts-section">
+                <!-- Gift Items Section -->
+                <div class="section">
                     <div class="section-header">
                         <h3>Available Gift Items</h3>
                         <p>Select the gifts you'd like to contribute to this event</p>
@@ -88,13 +88,13 @@
                     <div id="gifts-list" class="gifts-grid">
                         <!-- Gift items will be loaded here -->
                     </div>
-                </div>
 
-                <!-- Empty State -->
-                <div id="empty-state" class="empty-state" style="display: none;">
-                    <i class="fas fa-gift"></i>
-                    <h3>No Gift Items Yet</h3>
-                    <p>The event organizer hasn't added any gift items yet. Check back later!</p>
+                    <!-- Empty State -->
+                    <div id="empty-state" class="empty-state" style="display: none;">
+                        <i class="fas fa-gift"></i>
+                        <h3>No Gift Items Yet</h3>
+                        <p>The event organizer hasn't added any gift items yet. Check back later!</p>
+                    </div>
                 </div>
             </main>
 
