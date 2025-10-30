@@ -16,7 +16,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+// Configure helmet for development vs production
+app.use(helmet({
+  crossOriginOpenerPolicy: process.env.NODE_ENV === 'production' 
+    ? { policy: "same-origin" } 
+    : false, // Disable COOP in development to avoid warnings over HTTP
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' 
+    ? undefined 
+    : false // Disable CSP in development for easier debugging
+}));
 app.use(cors());
 
 // Rate limiting
