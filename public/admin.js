@@ -31,6 +31,11 @@ class AdminApp {
             this.logout();
         });
 
+        // Settings button
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            this.showSettingsModal();
+        });
+
         // New event button
         document.getElementById('new-event-btn').addEventListener('click', () => {
             this.showEventModal();
@@ -53,6 +58,12 @@ class AdminApp {
             this.handleGiftSubmit();
         });
 
+        // Settings form
+        document.getElementById('settings-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handlePasswordChange();
+        });
+
         // Tab switching - use event delegation
         document.addEventListener('click', (e) => {
             const tabBtn = e.target.closest('.tab-btn');
@@ -73,8 +84,16 @@ class AdminApp {
             this.publishEvent();
         });
 
-        document.getElementById('close-event-btn').addEventListener('click', () => {
-            this.closeEvent();
+        document.getElementById('set-draft-btn').addEventListener('click', () => {
+            this.setDraft();
+        });
+
+        document.getElementById('archive-event-btn').addEventListener('click', () => {
+            this.archiveEvent();
+        });
+
+        document.getElementById('clone-event-btn').addEventListener('click', () => {
+            this.cloneEvent();
         });
 
         document.getElementById('edit-event-btn').addEventListener('click', () => {
@@ -87,10 +106,18 @@ class AdminApp {
 
         // Add attendees/gifts
         document.getElementById('add-attendees-btn').addEventListener('click', () => {
+            if (this.currentEvent && this.currentEvent.status === 'archived') {
+                this.showError('Cannot modify archived events');
+                return;
+            }
             this.showAddAttendeesModal();
         });
 
         document.getElementById('add-gift-btn').addEventListener('click', () => {
+            if (this.currentEvent && this.currentEvent.status === 'archived') {
+                this.showError('Cannot modify archived events');
+                return;
+            }
             this.showGiftModal();
         });
     }
@@ -214,30 +241,55 @@ class AdminApp {
             return;
         }
 
-        container.innerHTML = events.map(event => `
-            <div class="event-card" data-event-id="${event.id}">
-                <h3>${event.subject}</h3>
-                <p>${event.description || 'No description'}</p>
-                <div class="event-meta">
-                    <span class="meta-item">
-                        <i class="fas fa-user"></i>
-                        ${event.gift_receiver_name}
-                    </span>
-                    <span class="meta-item">
-                        <i class="fas fa-users"></i>
-                        ${event.attendee_count} attendees
-                    </span>
-                    <span class="meta-item">
-                        <i class="fas fa-gift"></i>
-                        ${event.gift_count} gifts
-                    </span>
-                    <span class="meta-item">
-                        <i class="fas fa-circle status-indicator status-${event.status}"></i>
-                        ${event.status}
-                    </span>
+        // Group events by status
+        const publishedEvents = events.filter(e => e.status === 'published');
+        const draftEvents = events.filter(e => e.status === 'draft');
+        const archivedEvents = events.filter(e => e.status === 'archived');
+
+        const renderEventGroup = (groupEvents, statusLabel) => {
+            if (groupEvents.length === 0) return '';
+            
+            return `
+                <div class="event-group">
+                    <h3 class="event-group-title">${statusLabel}</h3>
+                    <div class="events-grid">
+                        ${groupEvents.map(event => `
+                            <div class="event-card" data-event-id="${event.id}">
+                                <h3>${event.subject} (${event.id})</h3>
+                                <p>${event.description || 'No description'}</p>
+                                <div class="event-meta">
+                                    <span class="meta-item">
+                                        <i class="fas fa-user"></i>
+                                        ${event.gift_receiver_name}
+                                    </span>
+                                    <span class="meta-item">
+                                        <i class="fas fa-users"></i>
+                                        ${event.attendee_count} attendees
+                                    </span>
+                                    <span class="meta-item">
+                                        <i class="fas fa-gift"></i>
+                                        ${event.gift_count} gifts
+                                    </span>
+                                    <span class="meta-item">
+                                        <i class="fas fa-circle status-indicator status-${event.status}"></i>
+                                        ${event.status}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        };
+
+        const publishedLabel = this.currentLanguage === 'de' ? 'Veröffentlicht' : 'Published';
+        const draftLabel = this.currentLanguage === 'de' ? 'Entwurf' : 'Draft';
+        const archivedLabel = this.currentLanguage === 'de' ? 'Archiviert' : 'Archived';
+
+        container.innerHTML = 
+            renderEventGroup(publishedEvents, publishedLabel) +
+            renderEventGroup(draftEvents, draftLabel) +
+            renderEventGroup(archivedEvents, archivedLabel);
         
         // Add click event listeners to event cards
         container.querySelectorAll('.event-card').forEach(card => {
@@ -283,7 +335,7 @@ class AdminApp {
         document.getElementById('event-details-section').style.display = 'block';
 
         // Update event info
-        document.getElementById('event-title').textContent = event.subject;
+        document.getElementById('event-title').textContent = `${event.subject} (${event.id})`;
         document.getElementById('event-description').textContent = event.description || 'No description';
         document.getElementById('gift-receiver').textContent = event.gift_receiver_name;
         document.getElementById('attendee-count').textContent = event.attendees ? event.attendees.length : 0;
@@ -296,17 +348,55 @@ class AdminApp {
 
         // Show/hide action buttons based on status
         const publishBtn = document.getElementById('publish-event-btn');
-        const closeBtn = document.getElementById('close-event-btn');
+        const setDraftBtn = document.getElementById('set-draft-btn');
+        const archiveBtn = document.getElementById('archive-event-btn');
+        const cloneBtn = document.getElementById('clone-event-btn');
 
+        // Hide all status buttons first
+        publishBtn.style.display = 'none';
+        setDraftBtn.style.display = 'none';
+        archiveBtn.style.display = 'none';
+        cloneBtn.style.display = 'none';
+
+        // Show appropriate buttons based on status
         if (event.status === 'draft') {
             publishBtn.style.display = 'inline-flex';
-            closeBtn.style.display = 'none';
         } else if (event.status === 'published') {
-            publishBtn.style.display = 'none';
-            closeBtn.style.display = 'inline-flex';
+            setDraftBtn.style.display = 'inline-flex';
+            archiveBtn.style.display = 'inline-flex';
+            cloneBtn.style.display = 'inline-flex';
+        } else if (event.status === 'archived') {
+            cloneBtn.style.display = 'inline-flex';
+        }
+
+        // Hide Edit button if archived
+        const editBtn = document.getElementById('edit-event-btn');
+        if (event.status === 'archived') {
+            editBtn.style.display = 'none';
         } else {
-            publishBtn.style.display = 'none';
-            closeBtn.style.display = 'none';
+            editBtn.style.display = 'inline-flex';
+        }
+
+        // Disable Add Attendees and Add Gift buttons if archived
+        const addAttendeesBtn = document.getElementById('add-attendees-btn');
+        const addGiftBtn = document.getElementById('add-gift-btn');
+        
+        if (event.status === 'archived') {
+            addAttendeesBtn.disabled = true;
+            addAttendeesBtn.style.opacity = '0.5';
+            addAttendeesBtn.style.cursor = 'not-allowed';
+            
+            addGiftBtn.disabled = true;
+            addGiftBtn.style.opacity = '0.5';
+            addGiftBtn.style.cursor = 'not-allowed';
+        } else {
+            addAttendeesBtn.disabled = false;
+            addAttendeesBtn.style.opacity = '1';
+            addAttendeesBtn.style.cursor = 'pointer';
+            
+            addGiftBtn.disabled = false;
+            addGiftBtn.style.opacity = '1';
+            addGiftBtn.style.cursor = 'pointer';
         }
 
         // Render attendees and gifts
@@ -316,6 +406,7 @@ class AdminApp {
 
     renderAttendees(attendees) {
         const container = document.getElementById('attendees-list');
+        const isArchived = this.currentEvent && this.currentEvent.status === 'archived';
         
         if (attendees.length === 0) {
             container.innerHTML = `
@@ -335,10 +426,10 @@ class AdminApp {
                     <span>${attendee.email}</span>
                 </div>
                 <div class="attendee-actions">
-                    <button class="copy-link-btn" data-attendee-token="${attendee.unique_token}">
+                    <button class="copy-link-btn" data-attendee-token="${attendee.unique_token}" ${isArchived ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                         <i class="fas fa-copy"></i> Copy Link
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="adminApp.deleteAttendee(${attendee.id})">
+                    <button class="btn btn-sm btn-danger" onclick="adminApp.deleteAttendee(${attendee.id})" ${isArchived ? 'disabled' : ''}>
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -348,7 +439,11 @@ class AdminApp {
         // Add event listeners for copy link buttons
         container.querySelectorAll('.copy-link-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const token = e.target.closest('.copy-link-btn').dataset.attendeeToken;
+                const button = e.target.closest('.copy-link-btn');
+                if (button.disabled) {
+                    return; // Don't copy if button is disabled
+                }
+                const token = button.dataset.attendeeToken;
                 this.copyAttendeeLink(token);
             });
         });
@@ -356,6 +451,7 @@ class AdminApp {
 
     renderGifts(gifts) {
         const container = document.getElementById('gifts-list');
+        const isArchived = this.currentEvent && this.currentEvent.status === 'archived';
         
         if (gifts.length === 0) {
             container.innerHTML = `
@@ -368,37 +464,66 @@ class AdminApp {
             return;
         }
 
-        container.innerHTML = gifts.map(gift => `
-            <div class="gift-card ${gift.selected_by_attendee_id ? 'selected-by-other' : ''}">
-                <div class="gift-status ${gift.selected_by_attendee_id ? 'selected-by-other' : 'available'}">
-                    ${gift.selected_by_attendee_id ? `Selected by ${gift.selected_by_name}` : 'Available'}
-                </div>
-                <h4>${gift.name}</h4>
-                ${gift.price ? `<div class="gift-price">€${gift.price}</div>` : ''}
-                ${gift.store_urls && Array.isArray(gift.store_urls) && gift.store_urls.length > 0 ? `
-                    <div class="gift-stores">
-                        <h5>Available at:</h5>
-                        <ul>
-                            ${gift.store_urls.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('')}
-                        </ul>
+        // Group gifts by selection status
+        const availableGifts = gifts.filter(g => !g.selected_by_attendee_id);
+        const selectedGifts = gifts.filter(g => g.selected_by_attendee_id);
+
+        const renderGiftCard = (gift) => {
+            return `
+                <div class="gift-card ${gift.selected_by_attendee_id ? 'selected-by-other' : ''}">
+                    <div class="gift-status ${gift.selected_by_attendee_id ? 'selected-by-other' : 'available'}">
+                        ${gift.selected_by_attendee_id ? `Selected by ${gift.selected_by_name}` : 'Available'}
                     </div>
-                ` : ''}
-                <div class="gift-actions">
-                    <button class="btn btn-sm btn-primary" onclick="adminApp.editGift(${gift.id})">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="adminApp.deleteGift(${gift.id})">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
+                    <h4>${gift.name}</h4>
+                    ${gift.price ? `<div class="gift-price">€${gift.price}</div>` : ''}
+                    ${gift.store_urls && Array.isArray(gift.store_urls) && gift.store_urls.length > 0 ? `
+                        <div class="gift-stores">
+                            <h5>Available at:</h5>
+                            <ul>
+                                ${gift.store_urls.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    <div class="gift-actions">
+                        <button class="btn btn-sm btn-primary" onclick="adminApp.editGift(${gift.id})" ${isArchived ? 'disabled' : ''}>
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="adminApp.deleteGift(${gift.id})" ${isArchived ? 'disabled' : ''}>
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        };
+
+        const renderGiftGroup = (groupGifts, titleKey) => {
+            if (groupGifts.length === 0) return '';
+            
+            return `
+                <div class="gift-group">
+                    <h3 class="gift-group-title">${titleKey}</h3>
+                    <div class="gifts-grid">
+                        ${groupGifts.map(gift => renderGiftCard(gift)).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        const availableLabel = this.currentLanguage === 'de' ? 'Verfügbare Geschenke' : 'Available Gifts';
+        const selectedLabel = this.currentLanguage === 'de' ? 'Bereits ausgewählt' : 'Already Selected';
+
+        container.innerHTML = 
+            renderGiftGroup(availableGifts, availableLabel) +
+            renderGiftGroup(selectedGifts, selectedLabel);
     }
 
     showEventsList() {
         document.getElementById('events-section').style.display = 'block';
         document.getElementById('event-details-section').style.display = 'none';
         this.currentEvent = null;
+        
+        // Reload events to refresh the list with updated statuses
+        this.loadEvents();
     }
 
     switchTab(tabName) {
@@ -442,6 +567,14 @@ class AdminApp {
             document.getElementById('event-subject').value = event.subject;
             document.getElementById('event-description').value = event.description || '';
             document.getElementById('gift-receiver-name').value = event.gift_receiver_name;
+            
+            // Populate attendees textarea with existing attendees
+            if (event.attendees && event.attendees.length > 0) {
+                const attendeesText = event.attendees.map(a => `${a.name}, ${a.email}`).join('\n');
+                document.getElementById('attendees-input').value = attendeesText;
+            } else {
+                document.getElementById('attendees-input').value = '';
+            }
         } else {
             title.textContent = 'Create New Event';
             form.reset();
@@ -468,6 +601,16 @@ class AdminApp {
             delete form.dataset.giftId;
         }
 
+        modal.classList.add('show');
+    }
+
+    showSettingsModal() {
+        const modal = document.getElementById('settings-modal');
+        const form = document.getElementById('settings-form');
+        const errorDiv = document.getElementById('password-error');
+        
+        form.reset();
+        errorDiv.style.display = 'none';
         modal.classList.add('show');
     }
 
@@ -621,14 +764,14 @@ class AdminApp {
         }
     }
 
-    async closeEvent() {
-        if (!confirm('Are you sure you want to close this event? This will make it read-only for all attendees.')) {
+    async setDraft() {
+        if (!confirm('Are you sure you want to set this event back to draft? Attendees will no longer be able to access it.')) {
             return;
         }
 
         try {
             this.showLoading();
-            const response = await fetch(`/api/admin/events/${this.currentEvent.id}/close`, {
+            const response = await fetch(`/api/admin/events/${this.currentEvent.id}/draft`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.token}`
@@ -637,14 +780,75 @@ class AdminApp {
 
             if (response.ok) {
                 this.viewEvent(this.currentEvent.id);
-                this.showSuccess('Event closed successfully!');
+                this.showSuccess('Event set to draft successfully!');
             } else {
                 const error = await response.json();
-                this.showError(error.error || 'Failed to close event');
+                this.showError(error.error || 'Failed to set event to draft');
             }
         } catch (error) {
-            console.error('Error closing event:', error);
-            this.showError('Failed to close event');
+            console.error('Error setting event to draft:', error);
+            this.showError('Failed to set event to draft');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async archiveEvent() {
+        if (!confirm('Are you sure you want to archive this event? This will make it read-only.')) {
+            return;
+        }
+
+        try {
+            this.showLoading();
+            const response = await fetch(`/api/admin/events/${this.currentEvent.id}/archive`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.ok) {
+                this.viewEvent(this.currentEvent.id);
+                this.showSuccess('Event archived successfully!');
+            } else {
+                const error = await response.json();
+                this.showError(error.error || 'Failed to archive event');
+            }
+        } catch (error) {
+            console.error('Error archiving event:', error);
+            this.showError('Failed to archive event');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async cloneEvent() {
+        if (!confirm('Clone this event? This will create a copy with all attendees but without gift items.')) {
+            return;
+        }
+
+        try {
+            this.showLoading();
+            const response = await fetch(`/api/admin/events/${this.currentEvent.id}/clone`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.ok) {
+                const clonedEvent = await response.json();
+                this.showSuccess('Event cloned successfully!');
+                
+                // Show the event modal for the cloned event so user can edit it
+                this.showEventModal(clonedEvent);
+            } else {
+                const error = await response.json();
+                this.showError(error.error || 'Failed to clone event');
+            }
+        } catch (error) {
+            console.error('Error cloning event:', error);
+            this.showError('Failed to clone event');
         } finally {
             this.hideLoading();
         }
@@ -685,6 +889,11 @@ class AdminApp {
     }
 
     async deleteAttendee(attendeeId) {
+        if (this.currentEvent && this.currentEvent.status === 'archived') {
+            this.showError('Cannot modify archived events');
+            return;
+        }
+
         if (!confirm('Are you sure you want to remove this attendee?')) {
             return;
         }
@@ -714,11 +923,21 @@ class AdminApp {
     }
 
     editGift(giftId) {
+        if (this.currentEvent && this.currentEvent.status === 'archived') {
+            this.showError('Cannot modify archived events');
+            return;
+        }
+
         const gift = this.currentEvent.gift_items.find(g => g.id === giftId);
         this.showGiftModal(gift);
     }
 
     async deleteGift(giftId) {
+        if (this.currentEvent && this.currentEvent.status === 'archived') {
+            this.showError('Cannot modify archived events');
+            return;
+        }
+
         if (!confirm('Are you sure you want to delete this gift item?')) {
             return;
         }
@@ -748,6 +967,11 @@ class AdminApp {
     }
 
     showAddAttendeesModal() {
+        if (this.currentEvent && this.currentEvent.status === 'archived') {
+            this.showError('Cannot modify archived events');
+            return;
+        }
+
         // Create a simple modal for adding attendees
         const modal = document.createElement('div');
         modal.className = 'modal show';
@@ -827,6 +1051,62 @@ class AdminApp {
         }
     }
 
+    async handlePasswordChange() {
+        const form = document.getElementById('settings-form');
+        const formData = new FormData(form);
+        const errorDiv = document.getElementById('password-error');
+        
+        const currentPassword = formData.get('current_password');
+        const newPassword = formData.get('new_password');
+        const confirmPassword = formData.get('confirm_password');
+
+        // Validate passwords match
+        if (newPassword !== confirmPassword) {
+            errorDiv.textContent = 'New passwords do not match';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        // Validate password length
+        if (newPassword.length < 6) {
+            errorDiv.textContent = 'Password must be at least 6 characters';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        errorDiv.style.display = 'none';
+
+        try {
+            this.showLoading();
+            const response = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({ 
+                    current_password: currentPassword,
+                    new_password: newPassword
+                })
+            });
+
+            if (response.ok) {
+                this.closeModal();
+                this.showSuccess('Password changed successfully!');
+            } else {
+                const error = await response.json();
+                errorDiv.textContent = error.error || 'Failed to change password';
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error changing password:', error);
+            errorDiv.textContent = 'Failed to change password';
+            errorDiv.style.display = 'block';
+        } finally {
+            this.hideLoading();
+        }
+    }
+
     showLoading() {
         document.getElementById('loading-overlay').style.display = 'flex';
     }
@@ -836,13 +1116,13 @@ class AdminApp {
     }
 
     showError(message) {
-        // Simple error display - in a real app, you'd want a proper notification system
-        alert('Error: ' + message);
+        // Log error to console instead of showing alert
+        console.error('Error:', message);
     }
 
     showSuccess(message) {
-        // Simple success display - in a real app, you'd want a proper notification system
-        alert('Success: ' + message);
+        // Log success to console instead of showing alert
+        console.log('Success:', message);
     }
 
     async copyAttendeeLink(token) {
@@ -906,9 +1186,17 @@ class AdminApp {
                 'gifts': 'Geschenke',
                 'Back to Events': 'Zurück zu Events',
                 'Publish Event': 'Event veröffentlichen',
-                'Close Event': 'Event schließen',
+                'Set to Draft': 'Auf Entwurf setzen',
+                'Archive Event': 'Event archivieren',
+                'Clone Event': 'Event klonen',
                 'Edit Event': 'Event bearbeiten',
                 'Delete Event': 'Event löschen',
+                'Settings': 'Einstellungen',
+                'Change Password': 'Passwort ändern',
+                'Current Password *': 'Aktuelles Passwort *',
+                'New Password *': 'Neues Passwort *',
+                'Confirm New Password *': 'Neues Passwort bestätigen *',
+                'Minimum 6 characters': 'Mindestens 6 Zeichen',
                 'Gift Recipient': 'Geschenkempfänger',
                 'Attendees': 'Teilnehmer',
                 'Gift Items': 'Geschenk-Artikel',
@@ -931,7 +1219,13 @@ class AdminApp {
                 'Save Gift Item': 'Geschenk-Artikel speichern',
                 'Loading...': 'Lädt...',
                 'Copy Link': 'Link kopieren',
-                'Attendee link copied to clipboard!': 'Teilnehmer-Link in die Zwischenablage kopiert!'
+                'Attendee link copied to clipboard!': 'Teilnehmer-Link in die Zwischenablage kopiert!',
+                'Cannot modify archived events': 'Archivierte Events können nicht geändert werden',
+                'Published': 'Veröffentlicht',
+                'Draft': 'Entwurf',
+                'Archived': 'Archiviert',
+                'Available Gifts': 'Verfügbare Geschenke',
+                'Already Selected': 'Bereits ausgewählt'
             },
             en: {
                 'Digital Gift Table Admin': 'Digital Gift Table Admin',
@@ -944,9 +1238,17 @@ class AdminApp {
                 'gifts': 'gifts',
                 'Back to Events': 'Back to Events',
                 'Publish Event': 'Publish Event',
-                'Close Event': 'Close Event',
+                'Set to Draft': 'Set to Draft',
+                'Archive Event': 'Archive Event',
+                'Clone Event': 'Clone Event',
                 'Edit Event': 'Edit Event',
                 'Delete Event': 'Delete Event',
+                'Settings': 'Settings',
+                'Change Password': 'Change Password',
+                'Current Password *': 'Current Password *',
+                'New Password *': 'New Password *',
+                'Confirm New Password *': 'Confirm New Password *',
+                'Minimum 6 characters': 'Minimum 6 characters',
                 'Gift Recipient': 'Gift Recipient',
                 'Attendees': 'Attendees',
                 'Gift Items': 'Gift Items',
@@ -969,7 +1271,13 @@ class AdminApp {
                 'Save Gift Item': 'Save Gift Item',
                 'Loading...': 'Loading...',
                 'Copy Link': 'Copy Link',
-                'Attendee link copied to clipboard!': 'Attendee link copied to clipboard!'
+                'Attendee link copied to clipboard!': 'Attendee link copied to clipboard!',
+                'Cannot modify archived events': 'Cannot modify archived events',
+                'Published': 'Published',
+                'Draft': 'Draft',
+                'Archived': 'Archived',
+                'Available Gifts': 'Available Gifts',
+                'Already Selected': 'Already Selected'
             }
         };
 

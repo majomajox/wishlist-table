@@ -15,6 +15,14 @@ router.get('/event/:token', authenticateAttendee, async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
+    // Check if event is archived or if event doesn't exist anymore
+    if (attendee.status === 'archived' || !attendee.event_id) {
+      return res.status(410).json({ 
+        error: 'Event no longer available',
+        message: 'This event has been archived and is no longer accessible.'
+      });
+    }
+
     // Get gift items for this event
     const giftItems = await GiftItem.findByEventId(attendee.event_id);
     
@@ -54,8 +62,8 @@ router.post('/select/:token', authenticateAttendee, async (req, res) => {
 
     // Check if event is still open
     const event = await Event.findById(req.attendee.event_id);
-    if (event.status === 'closed') {
-      return res.status(400).json({ error: 'This event is closed' });
+    if (event.status === 'archived') {
+      return res.status(400).json({ error: 'This event is archived and no longer accepting changes' });
     }
 
     // Check if gift item is already selected
@@ -97,8 +105,8 @@ router.post('/unselect/:token', authenticateAttendee, async (req, res) => {
 
     // Check if event is still open
     const event = await Event.findById(req.attendee.event_id);
-    if (event.status === 'closed') {
-      return res.status(400).json({ error: 'This event is closed' });
+    if (event.status === 'archived') {
+      return res.status(400).json({ error: 'This event is archived and no longer accepting changes' });
     }
 
     // Check if the attendee actually selected this item

@@ -325,6 +325,24 @@ body {
     color: #495057;
 }
 
+/* Event Groups */
+.event-group {
+    margin-bottom: 48px;
+}
+
+.event-group:last-child {
+    margin-bottom: 0;
+}
+
+.event-group-title {
+    color: #495057;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
+}
+
 /* Events Grid */
 .events-grid {
     display: grid;
@@ -336,9 +354,11 @@ body {
     background: #f8f9fa;
     border: 2px solid #e9ecef;
     border-radius: 12px;
-    padding: 20px;
+    padding: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
+    max-width: 350px;
+    min-width: 349px;
 }
 
 .event-card:hover {
@@ -360,8 +380,9 @@ body {
 
 .event-meta {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 24px;
     font-size: 12px;
     color: #6c757d;
 }
@@ -369,7 +390,7 @@ body {
 .meta-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .status-indicator {
@@ -381,7 +402,7 @@ body {
 
 .status-draft { color: #6c757d; }
 .status-published { color: #28a745; }
-.status-closed { color: #dc3545; }
+.status-archived { color: #ffc107; }
 
 /* Event Details */
 .event-header {
@@ -403,6 +424,13 @@ body {
     margin-top: 24px;
 }
 
+.event-info {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
 .event-info h2 {
     color: #495057;
     margin-bottom: 8px;
@@ -418,6 +446,7 @@ body {
     display: flex;
     border-bottom: 2px solid #e9ecef;
     margin-bottom: 24px;
+    margin-top: 24px;
 }
 
 .tab-btn {
@@ -486,6 +515,24 @@ body {
 .attendee-actions {
     display: flex;
     gap: 4px;
+}
+
+/* Gift Groups */
+.gift-group {
+    margin-bottom: 40px;
+}
+
+.gift-group:last-child {
+    margin-bottom: 0;
+}
+
+.gift-group-title {
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
 }
 
 /* Gifts Grid */

@@ -2,12 +2,15 @@ const db = require('./database');
 
 class Event {
   static async create(eventData) {
-    const { subject, description, gift_receiver_name } = eventData;
+    const { subject, description, gift_receiver_name, status = 'draft' } = eventData;
+    console.log('Creating event with status:', status);
     const sql = `
-      INSERT INTO events (subject, description, gift_receiver_name)
-      VALUES (?, ?, ?)
+      INSERT INTO events (subject, description, gift_receiver_name, status)
+      VALUES (?, ?, ?, ?)
     `;
-    return await db.run(sql, [subject, description, gift_receiver_name]);
+    const result = await db.run(sql, [subject, description, gift_receiver_name, status]);
+    console.log('Event created with ID:', result.id);
+    return result;
   }
 
   static async findById(id) {
@@ -31,12 +34,20 @@ class Event {
 
   static async update(id, eventData) {
     const { subject, description, gift_receiver_name, status } = eventData;
+    
+    // If status is not provided, fetch current status from database
+    let finalStatus = status;
+    if (status === undefined || status === null) {
+      const currentEvent = await this.findById(id);
+      finalStatus = currentEvent ? currentEvent.status : 'draft';
+    }
+    
     const sql = `
       UPDATE events 
       SET subject = ?, description = ?, gift_receiver_name = ?, status = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
-    return await db.run(sql, [subject, description, gift_receiver_name, status, id]);
+    return await db.run(sql, [subject, description, gift_receiver_name, finalStatus, id]);
   }
 
   static async publish(id) {
@@ -48,13 +59,52 @@ class Event {
     return await db.run(sql, [id]);
   }
 
-  static async close(id) {
+  static async setDraft(id) {
     const sql = `
       UPDATE events 
-      SET status = 'closed', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      SET status = 'draft', updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
     return await db.run(sql, [id]);
+  }
+
+  static async archive(id) {
+    const sql = `
+      UPDATE events 
+      SET status = 'archived', closed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `;
+    return await db.run(sql, [id]);
+  }
+
+  static async clone(id) {
+    // Get original event
+    const originalEvent = await this.findById(id);
+    if (!originalEvent) {
+      throw new Error('Event not found');
+    }
+
+    // Create new event with same details but as draft
+    const cloneResult = await this.create({
+      subject: `${originalEvent.subject} (Copy)`,
+      description: originalEvent.description,
+      gift_receiver_name: originalEvent.gift_receiver_name,
+      status: 'draft'
+    });
+
+    // Get attendees from original event
+    const attendees = await db.query(
+      'SELECT name, email FROM attendees WHERE event_id = ?',
+      [id]
+    );
+
+    // Copy attendees to cloned event
+    if (attendees && attendees.length > 0) {
+      const Attendee = require('./Attendee');
+      await Attendee.bulkCreate(cloneResult.id, attendees);
+    }
+
+    return cloneResult.id;
   }
 
   static async delete(id) {

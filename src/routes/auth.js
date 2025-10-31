@@ -3,8 +3,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const db = require('../models/database');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
+
+console.log('Auth routes loaded - change-password endpoint registered');
 
 // Login endpoint
 router.post('/login', [
@@ -125,6 +128,59 @@ router.get('/verify', (req, res) => {
     }
     res.json({ valid: true, user: decoded });
   });
+});
+
+// Change password endpoint
+router.post('/change-password', authenticateToken, [
+  body('current_password').notEmpty().withMessage('Current password is required'),
+  body('new_password').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { current_password, new_password } = req.body;
+    const userId = req.user.id;
+
+    console.log('Change password request for user ID:', userId);
+
+    // Get user from database
+    const user = await db.get(
+      'SELECT * FROM admin_users WHERE id = ?',
+      [userId]
+    );
+
+    console.log('User found:', user ? 'Yes' : 'No');
+
+    if (!user) {
+      console.error('User not found in database for ID:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(current_password, user.password_hash);
+    if (!isValidPassword) {
+      console.log('Invalid current password');
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    // Update password
+    await db.run(
+      'UPDATE admin_users SET password_hash = ? WHERE id = ?',
+      [hashedPassword, userId]
+    );
+
+    console.log('Password updated successfully for user ID:', userId);
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = router;

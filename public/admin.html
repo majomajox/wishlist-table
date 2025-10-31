@@ -54,6 +54,9 @@
                                 <option value="de">🇩🇪 Deutsch</option>
                             </select>
                         </div>
+                        <button id="settings-btn" class="btn btn-secondary">
+                            <i class="fas fa-cog"></i> <span>Settings</span>
+                        </button>
                         <button id="new-event-btn" class="btn btn-primary">
                             <i class="fas fa-plus"></i> <span>New Event</span>
                         </button>
@@ -69,7 +72,7 @@
                 <!-- Events List -->
                 <div id="events-section" class="section">
                     <h2>Gift Events</h2>
-                    <div id="events-list" class="events-grid">
+                    <div id="events-list">
                         <!-- Events will be loaded here -->
                     </div>
                 </div>
@@ -84,8 +87,14 @@
                             <button id="publish-event-btn" class="btn btn-success" style="display: none;">
                                 <i class="fas fa-paper-plane"></i> <span>Publish Event</span>
                             </button>
-                            <button id="close-event-btn" class="btn btn-warning" style="display: none;">
-                                <i class="fas fa-lock"></i> <span>Close Event</span>
+                            <button id="set-draft-btn" class="btn btn-secondary" style="display: none;">
+                                <i class="fas fa-file-alt"></i> <span>Set to Draft</span>
+                            </button>
+                            <button id="archive-event-btn" class="btn btn-warning" style="display: none;">
+                                <i class="fas fa-archive"></i> <span>Archive Event</span>
+                            </button>
+                            <button id="clone-event-btn" class="btn btn-primary" style="display: none;">
+                                <i class="fas fa-copy"></i> <span>Clone Event</span>
                             </button>
                             <button id="edit-event-btn" class="btn btn-primary">
                                 <i class="fas fa-edit"></i> <span>Edit Event</span>
@@ -122,29 +131,16 @@
 
                         <!-- Tabs -->
                         <div class="tabs">
-                            <button class="tab-btn active" data-tab="attendees">
-                                <i class="fas fa-users"></i> <span>Attendees</span>
-                            </button>
-                            <button class="tab-btn" data-tab="gifts">
+                            <button class="tab-btn active" data-tab="gifts">
                                 <i class="fas fa-gift"></i> <span>Gift Items</span>
                             </button>
-                        </div>
-
-                        <!-- Attendees Tab -->
-                        <div id="attendees-tab" class="tab-content active">
-                            <div class="tab-header">
-                                <h3>Event Attendees</h3>
-                                <button id="add-attendees-btn" class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> <span>Add Attendees</span>
-                                </button>
-                            </div>
-                            <div id="attendees-list" class="attendees-list">
-                                <!-- Attendees will be loaded here -->
-                            </div>
+                            <button class="tab-btn" data-tab="attendees">
+                                <i class="fas fa-users"></i> <span>Attendees</span>
+                            </button>
                         </div>
 
                         <!-- Gift Items Tab -->
-                        <div id="gifts-tab" class="tab-content">
+                        <div id="gifts-tab" class="tab-content active">
                             <div class="tab-header">
                                 <h3>Gift Items</h3>
                                 <button id="add-gift-btn" class="btn btn-primary">
@@ -153,6 +149,19 @@
                             </div>
                             <div id="gifts-list" class="gifts-grid">
                                 <!-- Gift items will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Attendees Tab -->
+                        <div id="attendees-tab" class="tab-content">
+                            <div class="tab-header">
+                                <h3>Event Attendees</h3>
+                                <button id="add-attendees-btn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> <span>Add Attendees</span>
+                                </button>
+                            </div>
+                            <div id="attendees-list" class="attendees-list">
+                                <!-- Attendees will be loaded here -->
                             </div>
                         </div>
                     </div>
@@ -222,6 +231,39 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Gift Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="settings-form">
+                <div class="modal-body">
+                    <h4 style="margin-bottom: 16px; color: #495057;">Change Password</h4>
+                    <div class="form-group">
+                        <label for="current-password">Current Password *</label>
+                        <input type="password" id="current-password" name="current_password" required autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password *</label>
+                        <input type="password" id="new-password" name="new_password" required autocomplete="new-password" minlength="6">
+                        <small>Minimum 6 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm New Password *</label>
+                        <input type="password" id="confirm-password" name="confirm_password" required autocomplete="new-password" minlength="6">
+                    </div>
+                    <div id="password-error" class="error-message" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
                 </div>
             </form>
         </div>

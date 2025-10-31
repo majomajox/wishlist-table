@@ -22,7 +22,7 @@ const createTables = () => {
           subject TEXT NOT NULL,
           description TEXT,
           gift_receiver_name TEXT NOT NULL,
-          status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'closed')),
+          status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'archived')),
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           published_at DATETIME,

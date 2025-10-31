@@ -120,13 +120,41 @@ router.post('/events/:id/publish', async (req, res) => {
   }
 });
 
-router.post('/events/:id/close', async (req, res) => {
+router.post('/events/:id/draft', async (req, res) => {
   try {
-    await Event.close(req.params.id);
-    res.json({ message: 'Event closed successfully' });
+    await Event.setDraft(req.params.id);
+    res.json({ message: 'Event set to draft successfully' });
   } catch (error) {
-    console.error('Error closing event:', error);
-    res.status(500).json({ error: 'Failed to close event' });
+    console.error('Error setting event to draft:', error);
+    res.status(500).json({ error: 'Failed to set event to draft' });
+  }
+});
+
+router.post('/events/:id/archive', async (req, res) => {
+  try {
+    await Event.archive(req.params.id);
+    res.json({ message: 'Event archived successfully' });
+  } catch (error) {
+    console.error('Error archiving event:', error);
+    res.status(500).json({ error: 'Failed to archive event' });
+  }
+});
+
+router.post('/events/:id/clone', async (req, res) => {
+  try {
+    const originalEvent = await Event.getEventWithDetails(req.params.id);
+    if (!originalEvent) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // Clone the event with attendees but without gift items
+    const clonedEventId = await Event.clone(req.params.id);
+    const clonedEvent = await Event.getEventWithDetails(clonedEventId);
+    
+    res.json(clonedEvent);
+  } catch (error) {
+    console.error('Error cloning event:', error);
+    res.status(500).json({ error: 'Failed to clone event' });
   }
 });
 

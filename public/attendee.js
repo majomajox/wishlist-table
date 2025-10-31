@@ -38,6 +38,11 @@ class AttendeeApp {
                 console.log('Event data loaded:', this.eventData);
                 this.showAttendeeScreen();
                 this.renderEventData();
+            } else if (response.status === 410) {
+                // Event is archived or no longer available
+                const error = await response.json();
+                console.log('Event no longer available:', error);
+                this.showError(error.message || 'This event is no longer available.');
             } else {
                 const error = await response.json();
                 console.error('API error:', error);
@@ -60,7 +65,17 @@ class AttendeeApp {
     showError(message) {
         document.getElementById('loading-screen').style.display = 'none';
         document.getElementById('error-screen').style.display = 'flex';
+        
+        // Update error message
         document.getElementById('error-message').textContent = message;
+        
+        // Update error title based on message content
+        const errorTitle = document.getElementById('error-title');
+        if (message && message.includes('no longer available')) {
+            errorTitle.textContent = this.currentLanguage === 'de' ? 'Event nicht verfügbar' : 'Event Not Available';
+        } else {
+            errorTitle.textContent = this.currentLanguage === 'de' ? 'Event nicht gefunden' : 'Event Not Found';
+        }
     }
 
     showAttendeeScreen() {
@@ -99,10 +114,10 @@ class AttendeeApp {
         this.renderGiftItems(gift_items);
 
         // Update section headers with proper language
-        const availableGiftsTitle = this.currentLanguage === 'de' ? 'Verfügbare Geschenkartikel' : 'Available Gift Items';
+        const availableGiftsTitle = this.currentLanguage === 'de' ? 'Geschenkartikel' : ' Gift Items';
         const availableGiftsDesc = this.currentLanguage === 'de' ? 
-            'Wähle die Geschenke aus, die du zu diesem Event beitragen möchtest' : 
-            'Select the gifts you\'d like to contribute to this event';
+            '' : 
+            '';
         
         const sectionHeader = document.querySelector('.section-header h3');
         if (sectionHeader) {
@@ -165,10 +180,15 @@ class AttendeeApp {
         const selectedByText = this.currentLanguage === 'de' ? 'Ausgewählt von' : 'Selected by';
         const availableText = this.currentLanguage === 'de' ? 'Verfügbar' : 'Available';
         
-        container.innerHTML = giftItems.map(gift => {
+        // Group gifts by selection status
+        const availableGifts = giftItems.filter(g => !g.selected_by_attendee_id);
+        const mySelectedGifts = giftItems.filter(g => g.selected_by_attendee_id === this.eventData.attendee.id);
+        const othersSelectedGifts = giftItems.filter(g => g.selected_by_attendee_id && g.selected_by_attendee_id !== this.eventData.attendee.id);
+
+        const renderGiftCard = (gift) => {
             const isSelected = gift.selected_by_attendee_id === this.eventData.attendee.id;
             const isSelectedByOther = gift.selected_by_attendee_id && !isSelected;
-            const isEventClosed = this.eventData.event.status === 'closed';
+            const isEventClosed = this.eventData.event.status === 'archived';
 
             return `
                 <div class="gift-card ${isSelected ? 'selected' : ''} ${isSelectedByOther ? 'selected-by-other' : ''}">
@@ -200,13 +220,35 @@ class AttendeeApp {
                                     </button>`
                         ) : (
                             `<button class="btn btn-sm btn-secondary" disabled>
-                                <i class="fas fa-lock"></i> <span class="btn-text">${this.currentLanguage === 'de' ? 'Event geschlossen' : 'Event Closed'}</span>
+                                <i class="fas fa-archive"></i> <span class="btn-text">${this.currentLanguage === 'de' ? 'Event archiviert' : 'Event Archived'}</span>
                             </button>`
                         )}
                     </div>
                 </div>
             `;
-        }).join('');
+        };
+
+        const renderGiftGroup = (groupGifts, titleKey) => {
+            if (groupGifts.length === 0) return '';
+            
+            return `
+                <div class="gift-group">
+                    <h3 class="gift-group-title">${titleKey}</h3>
+                    <div class="gifts-grid">
+                        ${groupGifts.map(gift => renderGiftCard(gift)).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        const availableLabel = this.currentLanguage === 'de' ? 'Verfügbare Geschenke' : 'Available Gifts';
+        const mySelectionLabel = this.currentLanguage === 'de' ? 'Von mir ausgewählt' : 'My Selection';
+        const selectedByOthersLabel = this.currentLanguage === 'de' ? 'Von anderen ausgewählt' : 'Selected by Others';
+
+        container.innerHTML = 
+            renderGiftGroup(availableGifts, availableLabel) +
+            renderGiftGroup(mySelectedGifts, mySelectionLabel) +
+            renderGiftGroup(othersSelectedGifts, selectedByOthersLabel);
     }
 
     renderSelectedItems(selectedItems) {
@@ -303,16 +345,22 @@ class AttendeeApp {
                 'Selected by you': 'Von dir ausgewählt',
                 'Selected by': 'Ausgewählt von',
                 'Available': 'Verfügbar',
-                'Event Closed': 'Event geschlossen',
+                'Event Archived': 'Event archiviert',
                 'Loading gift event...': 'Geschenk-Event wird geladen...',
                 'Event Not Found': 'Event nicht gefunden',
+                'Event Not Available': 'Event nicht verfügbar',
+                'This event is no longer available.': 'Dieses Event ist nicht mehr verfügbar.',
+                'This event has been archived and is no longer accessible.': 'Dieses Event wurde archiviert und ist nicht mehr zugänglich.',
                 'The gift event you\'re looking for doesn\'t exist or has expired.': 'Das Geschenk-Event, nach dem du suchst, existiert nicht oder ist abgelaufen.',
                 'Try Again': 'Erneut versuchen',
                 'Confirm Selection': 'Auswahl bestätigen',
                 'Cancel': 'Abbrechen',
                 'Confirm': 'Bestätigen',
                 'Processing...': 'Wird verarbeitet...',
-                'Available at:': 'Verfügbar bei:'
+                'Available at:': 'Verfügbar bei:',
+                'Available Gifts': 'Verfügbare Geschenke',
+                'My Selection': 'Von mir ausgewählt',
+                'Selected by Others': 'Von anderen ausgewählt'
             },
             en: {
                 'Digital Gift Table': 'Digital Gift Table',
@@ -329,16 +377,22 @@ class AttendeeApp {
                 'Selected by you': 'Selected by you',
                 'Selected by': 'Selected by',
                 'Available': 'Available',
-                'Event Closed': 'Event Closed',
+                'Event Archived': 'Event Archived',
                 'Loading gift event...': 'Loading gift event...',
                 'Event Not Found': 'Event Not Found',
+                'Event Not Available': 'Event Not Available',
+                'This event is no longer available.': 'This event is no longer available.',
+                'This event has been archived and is no longer accessible.': 'This event has been archived and is no longer accessible.',
                 'The gift event you\'re looking for doesn\'t exist or has expired.': 'The gift event you\'re looking for doesn\'t exist or has expired.',
                 'Try Again': 'Try Again',
                 'Confirm Selection': 'Confirm Selection',
                 'Cancel': 'Cancel',
                 'Confirm': 'Confirm',
                 'Processing...': 'Processing...',
-                'Available at:': 'Available at:'
+                'Available at:': 'Available at:',
+                'Available Gifts': 'Available Gifts',
+                'My Selection': 'My Selection',
+                'Selected by Others': 'Selected by Others'
             }
         };
 
@@ -390,8 +444,8 @@ class AttendeeApp {
     }
 
     async selectGift(giftId) {
-        if (this.eventData.event.status === 'closed') {
-            this.showError('This event is closed and no longer accepting selections');
+        if (this.eventData.event.status === 'archived') {
+            console.log('Event is archived - cannot select gifts');
             return;
         }
 
@@ -416,19 +470,18 @@ class AttendeeApp {
                 this.renderGiftItems(data.gift_items);
                 this.renderSelectedItems(data.selected_items);
             } else {
-                this.showError(data.error || 'Failed to select gift item');
+                console.error('Failed to select gift:', data.error);
             }
         } catch (error) {
             console.error('Error selecting gift:', error);
-            this.showError('Failed to select gift item');
         } finally {
             this.hideLoading();
         }
     }
 
     async unselectGift(giftId) {
-        if (this.eventData.event.status === 'closed') {
-            this.showError('This event is closed and no longer accepting changes');
+        if (this.eventData.event.status === 'archived') {
+            console.log('Event is archived - cannot unselect gifts');
             return;
         }
 
@@ -453,11 +506,10 @@ class AttendeeApp {
                 this.renderGiftItems(data.gift_items);
                 this.renderSelectedItems(data.selected_items);
             } else {
-                this.showError(data.error || 'Failed to unselect gift item');
+                console.error('Failed to unselect gift:', data.error);
             }
         } catch (error) {
             console.error('Error unselecting gift:', error);
-            this.showError('Failed to unselect gift item');
         } finally {
             this.hideLoading();
         }
@@ -469,16 +521,6 @@ class AttendeeApp {
 
     hideLoading() {
         document.getElementById('loading-overlay').style.display = 'none';
-    }
-
-    showError(message) {
-        // Simple error display - in a real app, you'd want a proper notification system
-        alert('Error: ' + message);
-    }
-
-    showSuccess(message) {
-        // Simple success display - in a real app, you'd want a proper notification system
-        alert('Success: ' + message);
     }
 }
 
